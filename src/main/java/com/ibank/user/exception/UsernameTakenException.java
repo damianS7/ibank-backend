@@ -1,4 +1,4 @@
-package com.ibank.registration;
+package com.ibank.user.exception;
 
 public class UsernameTakenException extends Exception {
     public UsernameTakenException(String s) {

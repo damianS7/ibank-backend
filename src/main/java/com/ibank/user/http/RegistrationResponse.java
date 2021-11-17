@@ -1,4 +1,6 @@
-package com.ibank.registration;
+package com.ibank.user.http;
+
+import com.ibank.user.User;
 
 public class RegistrationResponse {
     public Long id;
@@ -9,5 +11,11 @@ public class RegistrationResponse {
         this.id = id;
         this.username = username;
         this.email = email;
+    }
+
+    public RegistrationResponse(User user) {
+        this.id = user.getId();
+        this.username = user.getUsername();
+        this.email = user.getEmail();
     }
 }

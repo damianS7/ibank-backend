@@ -11,6 +11,10 @@ public class PasswordEncoder {
         return new BCryptPasswordEncoder().encode(password);
     }
 
+    public static BCryptPasswordEncoder encoder() {
+        return new BCryptPasswordEncoder();
+    }
+
     @Bean
     public BCryptPasswordEncoder bCryptPasswordEncoder() {
         return new BCryptPasswordEncoder();

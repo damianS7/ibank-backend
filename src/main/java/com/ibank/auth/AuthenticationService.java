@@ -52,7 +52,7 @@ public class AuthenticationService {
 
         // Enviamos al usuario de vuelta los datos necesarios para el cliente
         return new AuthenticationResponse(
-                user.getId(), user.getUsername(), user.getEmail(), token
+            user.getId(), user.getUsername(), user.getEmail(), token
         );
     }
 

@@ -1,4 +1,4 @@
-package com.ibank.user;
+package com.ibank.user.http;
 
 public class UserUpdateResponse {
     private String username;
