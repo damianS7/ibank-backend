@@ -35,14 +35,14 @@ public class WebSecurityConfig extends WebSecurityConfigurerAdapter {
     @Override
     protected void configure(HttpSecurity http) throws Exception {
         http.sessionManagement()
-                .sessionCreationPolicy(SessionCreationPolicy.STATELESS)
-                .and().cors()
-                .and().csrf().disable()
-                .authorizeRequests()
-                .antMatchers("/api/v1/users/login/**", "/api/v1/users/registration/**")
-                .permitAll()
-                .anyRequest().authenticated()
-                .and().addFilter(new AuthorizationFilter(authenticationManager()));
+            .sessionCreationPolicy(SessionCreationPolicy.STATELESS)
+            .and().cors()
+            .and().csrf().disable()
+            .authorizeRequests()
+            .antMatchers("/api/v1/users/login/**", "/api/v1/users/register/**")
+            .permitAll()
+            .anyRequest().authenticated()
+            .and().addFilter(new AuthorizationFilter(authenticationManager()));
     }
 
     @Override
@@ -53,7 +53,7 @@ public class WebSecurityConfig extends WebSecurityConfigurerAdapter {
 
     @Bean
     @Override
-    public AuthenticationManager authenticationManager () throws Exception {
+    public AuthenticationManager authenticationManager() throws Exception {
         return super.authenticationManager();
     }
 
@@ -79,7 +79,7 @@ public class WebSecurityConfig extends WebSecurityConfigurerAdapter {
         // Permitir todos los origenes, solo para testing, al desplear la app
         // Se debera solo permitir la IP del servidor.
         configuration.addAllowedOriginPattern("*");
-//        configuration.setAllowedOrigins(List.of("http://localhost:8080", "http://localhost"));
+        //        configuration.setAllowedOrigins(List.of("http://localhost:8080", "http://localhost"));
         configuration.setAllowedMethods(List.of("GET", "POST", "PUT", "DELETE"));
         //configuration.setAllowedMethods(Arrays.asList("GET", "OPTIONS", "POST"));
         UrlBasedCorsConfigurationSource source = new UrlBasedCorsConfigurationSource();
