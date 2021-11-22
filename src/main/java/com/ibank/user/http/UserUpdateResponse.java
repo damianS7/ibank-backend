@@ -1,19 +1,14 @@
 package com.ibank.user.http;
 
+import lombok.AllArgsConstructor;
+import lombok.Getter;
+
+@AllArgsConstructor
 public class UserUpdateResponse {
-    private String username;
-    private String email;
 
-    public UserUpdateResponse(String username, String email) {
-        this.username = username;
-        this.email = email;
-    }
+    @Getter
+    private final String username;
 
-    public String getUsername() {
-        return username;
-    }
-
-    public String getEmail() {
-        return email;
-    }
+    @Getter
+    private final String email;
 }
