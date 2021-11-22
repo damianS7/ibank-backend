@@ -1,48 +1,88 @@
 package com.ibank.user;
 
-import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.*;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.orm.jpa.DataJpaTest;
+
+import static org.assertj.core.api.Assertions.assertThat;
 
 import java.util.Optional;
 
 import static org.junit.jupiter.api.Assertions.*;
 
 @DataJpaTest
-class UserRepositoryTest {
+//@Transactional
+public class UserRepositoryTest {
 
     @Autowired
-    private UserRepository userRepository;
+    private UserRepository underTest;
 
     @Test
-    void updateUser() {
-        // Creacion de un usuario nuevo
-        userRepository.save(new User(null, "demo", "demo1@gmail.com", "1234"));
+    @Order(1)
+    public void itShouldSelectUserByEmail() {
+        // given
+        User userGiven = new User(
+            null,
+            "demo",
+            "demo1@gmail.com",
+            "1234"
+        );
 
-        // Busqueda del usuario que debe fallar
-        Optional<User> user = userRepository.findByUsername("dimo4");
-        assertFalse(user.isPresent());
+        // when
+        underTest.save(userGiven);
 
-        // Busqueda del usuario por nombre con exito
-        user = userRepository.findByUsername("demo");
-        assertTrue(user.isPresent());
+        // then
+        Optional<User> optUser = underTest.findByEmail(userGiven.getEmail());
+        assertThat(optUser).isPresent().hasValueSatisfying(user -> {
+            assertThat(user.getId()).isGreaterThanOrEqualTo(0);
+        });
+    }
+
+    @Test
+    @Order(2)
+    public void itShouldSelectUserByUsername() {
+        // given
+        User userGiven = new User(
+            null,
+            "demo",
+            "demo1@gmail.com",
+            "1234"
+        );
+
+        // when
+        underTest.save(userGiven);
+
+        // then
+        Optional<User> optUser = underTest.findByUsername("demo");
+        assertThat(optUser).isPresent().hasValueSatisfying(user -> {
+            assertThat(user.getId()).isGreaterThanOrEqualTo(0);
+        });
+    }
+
+    @Test
+    @Order(3)
+    public void itShouldUpdateExistingUser() {
+        // given
+        User userGiven = new User(
+            null,
+            "demo",
+            "demo1@gmail.com",
+            "1234"
+        );
+
+        // when
+        underTest.save(userGiven);
+
+        // then
+        userGiven = underTest.findByUsername("demo").get();
 
         // Actualizacion de email y password del usuario usuario
-        int rowsAffected = userRepository.updateUser(user.get().getId(), "demo@gmail.com", "123456");
+        int rowsAffected = underTest.updateUser(
+            userGiven.getId(),
+            "demo@gmail.com",
+            "123456"
+        );
+
         assertEquals(1, rowsAffected);
-
-        // Busqueda del usuario por email debe fallar
-        user = userRepository.findByEmail("dimo4@gmail.com");
-        assertFalse(user.isPresent());
-
-        // Busqueda del usuario por email del usuario actualizado
-        user = userRepository.findByEmail("demo@gmail.com");
-        assertTrue(user.isPresent());
-
-
-        // Actualizacion de email y password de un usuario que no existe
-        rowsAffected = userRepository.updateUser(7L, "demo@gmail.com", "123456");
-        assertEquals(0, rowsAffected);
-
     }
 }
