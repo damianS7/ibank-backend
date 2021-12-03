@@ -2,18 +2,22 @@ package com.ibank.user.http;
 
 import com.ibank.user.User;
 import lombok.AllArgsConstructor;
-import lombok.NoArgsConstructor;
+
+import javax.validation.constraints.NotBlank;
 
 @AllArgsConstructor
-@NoArgsConstructor
-public class UserUpdateResponse {
-    public Long id;
+public class UserSignupRequest {
+
+    @NotBlank
     public String username;
+
+    @NotBlank
     public String email;
+
+    @NotBlank
     public String password;
 
-    public UserUpdateResponse(User user) {
-        this.id = user.getId();
+    public UserSignupRequest(User user) {
         this.username = user.getUsername();
         this.email = user.getEmail();
         this.password = user.getPassword();
