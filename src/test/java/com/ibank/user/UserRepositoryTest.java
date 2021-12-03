@@ -34,7 +34,7 @@ public class UserRepositoryTest {
         // then
         Optional<User> optUser = underTest.findByEmail(userGiven.getEmail());
         assertThat(optUser).isPresent().hasValueSatisfying(user -> {
-            assertThat(user.getId()).isGreaterThanOrEqualTo(0);
+            assertThat(user.getEmail()).isEqualTo(userGiven.getEmail());
         });
     }
 
@@ -55,7 +55,7 @@ public class UserRepositoryTest {
         // then
         Optional<User> optUser = underTest.findByUsername("demo");
         assertThat(optUser).isPresent().hasValueSatisfying(user -> {
-            assertThat(user.getId()).isGreaterThanOrEqualTo(0);
+            assertThat(user.getUsername()).isEqualTo(userGiven.getUsername());
         });
     }
 
