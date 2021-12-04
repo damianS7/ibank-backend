@@ -1,11 +1,9 @@
 package com.ibank.user;
 
-import com.ibank.auth.AuthenticationFailedException;
 import com.ibank.user.exception.EmailTakenException;
 import com.ibank.user.exception.UsernameTakenException;
-import com.ibank.user.http.RegistrationResponse;
+import com.ibank.user.http.UserSignupRequest;
 import com.ibank.user.http.UserUpdateRequest;
-import com.ibank.user.http.UserUpdateResponse;
 import com.ibank.utils.PasswordEncoder;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.core.context.SecurityContextHolder;
@@ -24,65 +22,88 @@ public class UserService implements UserDetailsService {
         this.userRepository = userRepository;
     }
 
-    // Modifica los datos de un usuario
-    public UserUpdateResponse update(UserUpdateRequest request) {
-        String username = (String) SecurityContextHolder.getContext().getAuthentication().getPrincipal();
+    /**
+     * Modifica los datos de un usuario
+     *
+     * @param request La peticion con los datos de usuario a modificar
+     * @return El usuario actualizado
+     */
+    public User updateUser(UserUpdateRequest request) {
+        // updateUser(String newUsername, String newPassword)
 
-        // Obtenemos el nombre del usuario logeado que envia la peticion
-        User user = userRepository.findByUsername(username).orElseThrow();
+        // Leemos el nombre de usuario desde el sistema (token?), no desde la peticion
+        // Cambiar a id ???
+        // User loggedUser = (User) SecurityContextHolder.getContext().getAuthentication().getPrincipal();
+        // Long currentUserId = loggedUser.getId()
+        String currentUsername = "";
+        //try {
+        //    currentUsername = (String) SecurityContextHolder.getContext().getAuthentication().getPrincipal();
+        //} catch (Exception e) {
+        //}
 
-        // Antes de cambiar comprobamos que las password antiguas coincidan
-        if (!PasswordEncoder.encoder().matches(request.getOldPassword(), user.getPassword())) {
-            // Si las password no coinciden ...
-            throw new AuthenticationFailedException("Incorrect password");
+        if (!currentUsername.equals(request.username)) {
+            throw new IllegalStateException("Attemp to modify a different user.");
         }
 
-        String encodedPassword = PasswordEncoder.encode(request.getNewPassword());
+        // Guardamos los cambios
+        return this.updateUser(currentUsername, request.username, request.email, request.oldPassword, request.newPassword);
+    }
+
+    User updateUser(String currentUsername, String newUsername, String newEmail, String oldPassword, String newPassword) {
+
+        // Obtenemos el nombre del usuario logeado que envia la peticion
+        User user = userRepository.findByUsername(currentUsername).orElseThrow();
+
+        // Antes de cambiar comprobamos que las password antiguas coincidan
+        if (!PasswordEncoder.encoder().matches(oldPassword, user.getPassword())) {
+            // Si las password no coinciden ...
+            throw new IllegalStateException("Password does not match! : " + oldPassword + " != " + user.getPassword());
+        }
+
+        // Password cifrado
+        String encodedPassword = PasswordEncoder.encode(newPassword);
+
         // Modificamos el usuario
-        user.setUsername(request.getUsername());
+        user.setUsername(newUsername);
         user.setPassword(encodedPassword);
-        user.setEmail(request.getEmail());
+        user.setEmail(newEmail);
 
         // Guardamos los cambios
-        userRepository.save(user);
-        return new UserUpdateResponse(user.getUsername(), user.getEmail());
+        return userRepository.save(user);
     }
 
     /**
      * Metodo para dar de alta nuevos usuarios
-     * @param user
+     *
+     * @param signupRequest Datos del usuario a registrar
      * @return devuelve el usuario creado o una excepcion
      */
-    public RegistrationResponse register(User user) throws EmailTakenException, UsernameTakenException {
-
+    public User registerUser(UserSignupRequest signupRequest) {
         // Comprobamos que no exista otro usuario con el mismo nombre
-        if (userRepository.findByUsername(user.getUsername()).isPresent()) {
+        if (userRepository.findByUsername(signupRequest.username).isPresent()) {
             // El nombre de usuario esta en uso
             throw new UsernameTakenException("Este nombre de usuario ya esta en uso.");
         }
 
         // Aqui se comprueba si el email ya ha sido usado
-        if (userRepository.findByEmail(user.getEmail()).isPresent()) {
+        if (userRepository.findByEmail(signupRequest.email).isPresent()) {
             // El correo ya esta en uso ...
             throw new EmailTakenException("Este correo ya esta en uso.");
         }
 
         // Ciframos el password
-        String encodedPassword = PasswordEncoder.encode(user.getPassword());
-        user.setPassword(encodedPassword);
+        String encodedPassword = PasswordEncoder.encode(signupRequest.password);
 
-        // Asignamos el rol por defecto
-        user.setRole(UserRole.USER);
+        // Creamos la entidad a guardar en la db
+        User user = new User(null, signupRequest.username, signupRequest.email, encodedPassword);
 
         // Guardamos el usuario
-        User savedUser = userRepository.save(user);
-
-        return new RegistrationResponse(savedUser);
+        return userRepository.save(user);
     }
 
     @Override
     public UserDetails loadUserByUsername(String username) throws UsernameNotFoundException {
-        return userRepository.findByUsername(username).orElseThrow( () -> {
+        return userRepository.findByUsername(username).orElseThrow(() -> {
             throw new UsernameNotFoundException("Este nombre no ha sido encontrado.");
         });
     }

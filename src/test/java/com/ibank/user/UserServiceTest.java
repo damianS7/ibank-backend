@@ -2,36 +2,30 @@ package com.ibank.user;
 
 import com.ibank.user.exception.EmailTakenException;
 import com.ibank.user.exception.UsernameTakenException;
-import com.ibank.user.http.RegistrationResponse;
+import com.ibank.user.http.UserSignupRequest;
 import com.ibank.user.http.UserUpdateRequest;
-import lombok.SneakyThrows;
+import lombok.extern.slf4j.Slf4j;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
-import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Test;
-import org.mockito.Mock;
-import org.mockito.MockitoAnnotations;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.boot.test.autoconfigure.orm.jpa.DataJpaTest;
 import org.springframework.boot.test.context.SpringBootTest;
-
-import java.util.Optional;
-import java.util.logging.Level;
-import java.util.logging.Logger;
+import org.springframework.transaction.annotation.Transactional;
 
 import static org.junit.jupiter.api.Assertions.*;
 
 @SpringBootTest
+@Slf4j
 class UserServiceTest {
 
     @Autowired
     private UserRepository userRepository;
 
-    private UserService userService;
+    private UserService underTest;
 
     @BeforeEach
     void setUp() {
-        userService = new UserService(userRepository);
+        underTest = new UserService(userRepository);
     }
 
     @AfterEach
@@ -39,60 +33,132 @@ class UserServiceTest {
     }
 
     @Test
-    void register() {
-        // Registramos un usuario
-        assertDoesNotThrow(() -> userService.register(
-            new User(null, "demo", "demo@gmail.com", "1234")
-        ));
+    @Transactional
+    void signupShouldFailWhenUsingExistingUsername() {
+        // given
+        User user = new User(
+            null,
+            "demo",
+            "demo@gmail.com",
+            "1234"
+        );
+        UserSignupRequest signupRequest = new UserSignupRequest(user);
 
-        // Registrar el mismo usuario por lo que debe arrojar UsernameTakenExcepcion
-        assertThrows(UsernameTakenException.class, () -> userService.register(
-            new User(null, "demo", "demo1@gmail.com", "1234")
-        ));
+        // when
+        userRepository.save(user);
 
-        // Registramos otro usuario con el mismo email por loq ue debe arrojar EmailTakenExcepcion
-        assertThrows(EmailTakenException.class, () -> userService.register(
-            new User(null, "demo2", "demo@gmail.com", "1234")
-        ));
-
-        // Registramos un usuario que no existe previamente
-        RegistrationResponse rs = assertDoesNotThrow(() -> userService.register(
-            new User(null, "demo1", "demo1@gmail.com", "1234")
-        ));
-
-        // ...
-        //System.out.println("El id de: " + rs.username + " es: " +  rs.id.toString());
-        //Logger.getLogger("UserServiceTest").log(Level.FINE, "El id de: " + rs.username + " es: " +  rs.id.toString());
-
-        // Debe existir
-        assertEquals(true, userRepository.findByUsername("demo").isPresent());
-
-        // Debe existir
-        assertEquals(true, userRepository.findByUsername("demo1").isPresent());
-
-        // NO Debe existir
-        assertEquals(false, userRepository.findByUsername("demo2").isPresent());
+        // then
+        assertThrows(UsernameTakenException.class, () -> {
+            underTest.registerUser(signupRequest);
+        });
     }
 
     @Test
-    @Disabled
-    void update() {
-        // Primero tenemos que logearnos
-
-        // Actualizamos un usuario
-        userService.update(
-            new UserUpdateRequest("demo5", "demo@gmail.com", "1234", "123456")
+    @Transactional
+    void signupShouldFailWhenUsingExistingEmail() {
+        // given
+        User user = new User(
+            null,
+            "demo",
+            "demo@gmail.com",
+            "1234"
         );
-        assertDoesNotThrow(() -> userService.update(
-            new UserUpdateRequest("demo", "demo@gmail.com", "1234", "123456")
-        ));
+        UserSignupRequest signupRequest = new UserSignupRequest(user);
 
-        // Actualizamos un usuario incorrecto
+        // when
+        userRepository.save(user);
+        signupRequest.username = "demoabc";
 
-        // Actualizamos un usuario con valores incorrectos
+        // then
+        assertThrows(EmailTakenException.class, () -> {
+            underTest.registerUser(signupRequest);
+        });
+    }
 
+    @Test
+    @Transactional
+    void updateShouldWork() {
+        // given
+        User user = new User(
+            null,
+            "demo",
+            "demo@gmail.com",
+            "1234"
+        );
 
-        // Debe existir
-        assertEquals(true, userRepository.findByUsername("demo5").isPresent());
+        // when
+        underTest.registerUser(new UserSignupRequest(user));
+
+        // then
+        assertDoesNotThrow(() -> {
+            User updatedUser = underTest.updateUser(
+                "demo",
+                "demo2",
+                "demo77@gmail.com",
+                "1234",
+                "123456"
+            );
+            assertEquals(updatedUser.getEmail(), "demo77@gmail.com");
+        });
+
+    }
+
+    @Test
+    @Transactional
+    void updateShouldFailWhenPasswordsDoesNotMatch() {
+        // given
+        User user = new User(
+            null,
+            "demo",
+            "demo@gmail.com",
+            "1234"
+        );
+
+        // when
+        underTest.registerUser(new UserSignupRequest(user));
+
+        // then
+        // Debe arrojar IllegalState ya que el password actual es 123456 y recibe dummypassword
+        assertThrows(IllegalStateException.class, () -> {
+            underTest.updateUser(
+                "demo",
+                "demo",
+                "demo@gmail.com",
+                "dummypassword",
+                "1234"
+            );
+        });
+    }
+
+    @Test
+    @Transactional
+    void updateShouldFailWhenFormUserIsDifferentThanLogged() {
+        // given
+        User user = new User(
+            null,
+            "demo",
+            "demo@gmail.com",
+            "1234"
+        );
+
+        UserUpdateRequest updateRequest = new UserUpdateRequest(
+            "demo",
+            "demo7777@gmail.com",
+            "1234",
+            "123456",
+            "1234"
+        );
+
+        // when
+        underTest.registerUser(new UserSignupRequest(user));
+
+        // then
+        // Debe arrojar IllegalState ya que el password actual es 123456 y recibe dummypassword
+        assertThrows(IllegalStateException.class, () -> {
+            User updatedUser = underTest.updateUser(updateRequest);
+            assertEquals(updatedUser.getEmail(), updateRequest.email);
+        });
+
+        //log.info(" ...");
     }
 }
