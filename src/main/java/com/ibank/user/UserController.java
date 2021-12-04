@@ -30,7 +30,7 @@ public class UserController {
     /**
      * Endpoint para la creacion de nuevos usuarios.
      *
-     * @param signupRequest Los datos del usuario que se va a registrar
+     * @param signupRequest Los datos del usuario que se va a registrar.
      * @return Creado el usuario devuelve null
      */
     @PostMapping(path = "/api/v1/users/signup", consumes = "application/json")

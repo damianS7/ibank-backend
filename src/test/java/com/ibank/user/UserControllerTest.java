@@ -1,7 +1,9 @@
 package com.ibank.user;
 
+import com.ibank.auth.AuthenticationResponse;
 import com.ibank.user.http.UserSignupRequest;
 import com.ibank.user.http.UserSignupResponse;
+import com.ibank.user.http.UserUpdateRequest;
 import com.ibank.utils.ObjectJson;
 import lombok.SneakyThrows;
 import org.junit.jupiter.api.*;
@@ -38,6 +40,7 @@ class UserControllerTest {
     private UserController underTest;
 
     private final String signupUrl = "http://192.168.0.21:8888/api/v1/users/signup";
+    private final String updateUrl = "http://192.168.0.21:8888/api/v1/users/";
 
     @Test
     public void signupShouldWork() throws Exception {
@@ -82,31 +85,24 @@ class UserControllerTest {
     }
 
     @Test
-    public void registerShouldFailWhenNotJsonIsPost() throws Exception {
+    public void signupShouldFailWhenNotJsonIsPost() throws Exception {
         // given
         String plainText = "Hello";
 
         // when
+        ResultActions rt = mockMvc.perform(post(signupUrl)
+            .content(plainText)
+            .contentType(MediaType.TEXT_PLAIN)
+        );
+
         // then
-        mockMvc.perform(post(signupUrl)
-                .content(plainText)
-                .contentType(MediaType.TEXT_PLAIN))
-            .andExpect(result -> assertTrue(result.getResolvedException() instanceof HttpMediaTypeNotSupportedException));
-
-        //assertThrows(
-        //    HttpMediaTypeNotSupportedException.class,
-        //    () -> mockMvc.perform(post(registerURL)
-        //        .content(plainText)
-        //        .contentType(MediaType.TEXT_PLAIN)
-        //    ).andExpect(content().contentType(MediaType.APPLICATION_JSON)).andReturn()
-        //);
-
-        //.andExpect(result -> assertTrue(result.getResolvedException() instanceof HttpMediaTypeNotSupportedException));
-
+        assertThat(rt.andExpect(
+            result -> assertTrue(result.getResolvedException() instanceof HttpMediaTypeNotSupportedException))
+        );
     }
 
     @Test
-    public void registerShouldWorkWhenJsonIsPost() throws Exception {
+    public void signupShouldWorkWhenJsonIsPost() throws Exception {
         // given
         String json = """
             { 
@@ -126,7 +122,7 @@ class UserControllerTest {
     }
 
     @Test
-    public void registerShouldFailWhenNotUsingPost() throws Exception {
+    public void signupShouldFailWhenNotUsingPost() throws Exception {
         // given
         // when
         // then
@@ -141,5 +137,78 @@ class UserControllerTest {
 
         mockMvc.perform(delete(signupUrl))
             .andExpect(status().is(405));
+    }
+
+    @Test
+    @Disabled
+    public void updateShouldWork() throws Exception {
+        // given
+        User user = new User(
+            null,
+            "demo",
+            "demo@gmail.com",
+            "1234"
+        );
+
+        // when
+        ResultActions signup = mockMvc.perform(post(signupUrl)
+            .content(ObjectJson.toJson(new UserSignupRequest(user)))
+            .contentType(MediaType.APPLICATION_JSON)
+        );
+
+        String jsonResponse = signup.andReturn().getResponse().getContentAsString();
+        AuthenticationResponse authResponse = ObjectJson.fromJson(jsonResponse, AuthenticationResponse.class);
+
+        UserUpdateRequest updateRequest = new UserUpdateRequest(
+            "demo",
+            "demo@gmail.com",
+            "1234",
+            "123456",
+            authResponse.token
+        );
+
+        ResultActions update = mockMvc.perform(put(updateUrl)
+            .content(ObjectJson.toJson(updateRequest))
+            .contentType(MediaType.APPLICATION_JSON)).andDo(print()
+        );
+
+        // then
+        update.andExpect(status().is2xxSuccessful());
+    }
+
+    @Test
+    @Disabled
+    public void updateShouldFailWhenFormNotValid() throws Exception {
+        // given
+        User user = new User(
+            null,
+            "demo",
+            "demo@gmail.com",
+            "1234"
+        );
+
+        // when
+        ResultActions signup = mockMvc.perform(post(signupUrl)
+            .content(ObjectJson.toJson(new UserSignupRequest(user)))
+            .contentType(MediaType.APPLICATION_JSON)
+        );
+
+        String jsonResponse = signup.andReturn().getResponse().getContentAsString();
+        AuthenticationResponse authResponse = ObjectJson.fromJson(jsonResponse, AuthenticationResponse.class);
+
+        UserUpdateRequest updateRequest = new UserUpdateRequest(
+            "demo",
+            "demo@gmail.com",
+            "",
+            "123456",
+            authResponse.token
+        );
+
+        ResultActions rt = mockMvc.perform(put(updateUrl)
+            .content(ObjectJson.toJson(updateRequest))
+            .contentType(MediaType.APPLICATION_JSON)).andDo(print());
+
+        // then
+        assertThat(rt.andExpect(status().is4xxClientError()));
     }
 }

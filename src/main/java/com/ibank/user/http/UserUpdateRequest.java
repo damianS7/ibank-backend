@@ -25,4 +25,8 @@ public class UserUpdateRequest {
     @NotEmpty
     public String newPassword;
 
+    @NotBlank
+    @NotEmpty
+    public String token;
+
 }
