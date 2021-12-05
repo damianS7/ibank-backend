@@ -24,7 +24,7 @@ public class UserController {
      */
     @PutMapping(path = "/api/v1/users", consumes = "application/json")
     public UserUpdateResponse updateUser(@Valid @RequestBody UserUpdateRequest updateRequest) {
-        return new UserUpdateResponse(userService.updateUser(updateRequest));
+        return new UserUpdateResponse(userService.updateLoggedUser(updateRequest));
     }
 
     /**
@@ -35,6 +35,6 @@ public class UserController {
      */
     @PostMapping(path = "/api/v1/users/signup", consumes = "application/json")
     public UserSignupResponse createUser(@Valid @RequestBody UserSignupRequest signupRequest) {
-        return new UserSignupResponse(userService.registerUser(signupRequest));
+        return new UserSignupResponse(userService.createUser(signupRequest));
     }
 }
