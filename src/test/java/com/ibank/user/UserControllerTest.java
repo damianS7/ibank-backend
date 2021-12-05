@@ -204,11 +204,50 @@ class UserControllerTest {
             authResponse.token
         );
 
-        ResultActions rt = mockMvc.perform(put(updateUrl)
+        ResultActions updateResult = mockMvc.perform(put(updateUrl)
             .content(ObjectJson.toJson(updateRequest))
             .contentType(MediaType.APPLICATION_JSON)).andDo(print());
 
         // then
-        assertThat(rt.andExpect(status().is4xxClientError()));
+        assertThat(updateResult.andExpect(status().is4xxClientError()));
+    }
+
+    @Test
+    @Disabled
+    void updateShouldFailWhenFormUserIsDifferentThanLogged() throws Exception {
+        // given
+        User user = new User(
+            null,
+            "demo",
+            "demo@gmail.com",
+            "1234"
+        );
+
+        UserUpdateRequest updateRequest = new UserUpdateRequest(
+            "demo",
+            "demo7777@gmail.com",
+            "1234",
+            "123456",
+            "1234"
+        );
+
+        // when
+        underTest.createUser(new UserSignupRequest(user));
+        ResultActions updateResult = mockMvc.perform(put(updateUrl)
+            .content(ObjectJson.toJson(updateRequest))
+            .contentType(MediaType.APPLICATION_JSON)).andDo(print());
+
+        // then
+        // Debe arrojar IllegalState ya que el password actual es 123456 y recibe dummypassword
+        //assertThrows(IllegalStateException.class, () -> {
+        //    User updatedUser = underTest.updateUser(updateRequest);
+        //    assertEquals(updatedUser.getEmail(), updateRequest.email);
+        //});
+
+
+        // then
+        assertThat(updateResult.andExpect(status().is4xxClientError()));
+
+        //log.info(" ...");
     }
 }
