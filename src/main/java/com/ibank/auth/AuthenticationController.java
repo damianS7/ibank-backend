@@ -1,8 +1,14 @@
 package com.ibank.auth;
 
+import com.ibank.auth.exception.InvalidTokenException;
+import com.ibank.auth.exception.TokenExpiredException;
+import com.ibank.auth.http.AuthenticationRequest;
+import com.ibank.auth.http.AuthenticationResponse;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.core.AuthenticationException;
 import org.springframework.web.bind.annotation.*;
+
+import javax.validation.Valid;
 
 @RestController
 @RequestMapping
@@ -15,21 +21,25 @@ public class AuthenticationController {
         this.authenticationService = authenticationService;
     }
 
+
     /**
-     * Punto de acceso (POST) para la autenticacion
+     * Endpoint para la autenticacion
      *
      * @param request Peticion que contiene el usuario y password del usuario
      * @return Devuelve AuthenticationResponse con los datos de usuario (id, username, email y token)
      * @throws AuthenticationException Excepcion en caso de fallo
      */
-    @PostMapping("/api/v1/users/login")
-    public AuthenticationResponse login(@RequestBody AuthenticationRequest request) throws AuthenticationException {
-        return authenticationService.auth(request);
+    @PostMapping("/login")
+    public AuthenticationResponse login(@Valid @RequestBody AuthenticationRequest request) throws AuthenticationException {
+        return authenticationService.login(request);
     }
 
-    // Validacion de token
-    @GetMapping("/api/v1/users/tokenvalidation")
-    //@GetMapping("/api/v1/token/validate")
-    public void tokenValidation() throws AuthenticationException {
+    /**
+     * Endpoint para la validacion del token
+     *
+     * @throws AuthenticationException Excepcion si falla
+     */
+    @GetMapping("/api/v1/user/token/validate")
+    public void validateToken() throws InvalidTokenException, TokenExpiredException {
     }
 }

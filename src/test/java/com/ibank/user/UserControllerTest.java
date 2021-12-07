@@ -1,11 +1,10 @@
 package com.ibank.user;
 
-import com.ibank.auth.AuthenticationResponse;
+import com.ibank.auth.http.AuthenticationResponse;
 import com.ibank.user.http.UserSignupRequest;
 import com.ibank.user.http.UserSignupResponse;
 import com.ibank.user.http.UserUpdateRequest;
 import com.ibank.utils.ObjectJson;
-import lombok.SneakyThrows;
 import org.junit.jupiter.api.*;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
@@ -39,8 +38,8 @@ class UserControllerTest {
     @Autowired
     private UserController underTest;
 
-    private final String signupUrl = "http://192.168.0.21:8888/api/v1/users/signup";
-    private final String updateUrl = "http://192.168.0.21:8888/api/v1/users/";
+    private final String signupUrl = "http://192.168.0.21:8888/signup";
+    private final String updateUrl = "http://192.168.0.21:8888/api/v1/user/";
 
     @Test
     public void signupShouldWork() throws Exception {
