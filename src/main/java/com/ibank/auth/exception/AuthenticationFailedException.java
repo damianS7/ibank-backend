@@ -1,4 +1,4 @@
-package com.ibank.auth;
+package com.ibank.auth.exception;
 
 import org.springframework.security.core.AuthenticationException;
 
