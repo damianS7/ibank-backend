@@ -28,9 +28,7 @@ public class UserService implements UserDetailsService {
      * @param request La peticion con los datos de usuario a modificar
      * @return El usuario actualizado
      */
-    public User updateUser(UserUpdateRequest request) {
-        // updateUser(String newUsername, String newPassword)
-
+    public User updateLoggedUser(UserUpdateRequest request) {
         // Leemos el nombre de usuario desde el sistema (token?), no desde la peticion
         // Cambiar a id ???
         // User loggedUser = (User) SecurityContextHolder.getContext().getAuthentication().getPrincipal();
@@ -51,7 +49,7 @@ public class UserService implements UserDetailsService {
 
     User updateUser(String currentUsername, String newUsername, String newEmail, String oldPassword, String newPassword) {
 
-        // Obtenemos el nombre del usuario logeado que envia la peticion
+        // Buscamos el usuario en la db
         User user = userRepository.findByUsername(currentUsername).orElseThrow();
 
         // Antes de cambiar comprobamos que las password antiguas coincidan
@@ -78,7 +76,7 @@ public class UserService implements UserDetailsService {
      * @param signupRequest Datos del usuario a registrar
      * @return devuelve el usuario creado o una excepcion
      */
-    public User registerUser(UserSignupRequest signupRequest) {
+    public User createUser(UserSignupRequest signupRequest) {
         // Comprobamos que no exista otro usuario con el mismo nombre
         if (userRepository.findByUsername(signupRequest.username).isPresent()) {
             // El nombre de usuario esta en uso
