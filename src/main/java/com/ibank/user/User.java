@@ -2,10 +2,12 @@ package com.ibank.user;
 
 import lombok.*;
 import org.springframework.security.core.userdetails.UserDetails;
+
 import java.util.Collection;
 
 import org.springframework.security.core.GrantedAuthority;
 import org.springframework.security.core.authority.SimpleGrantedAuthority;
+
 import java.util.Collections;
 
 import javax.persistence.*;
@@ -14,6 +16,7 @@ import javax.persistence.*;
 @Table(name = "users")
 @NoArgsConstructor
 @AllArgsConstructor
+@ToString
 public class User implements UserDetails {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
@@ -56,7 +59,7 @@ public class User implements UserDetails {
     @Override
     public Collection<? extends GrantedAuthority> getAuthorities() {
         SimpleGrantedAuthority authority =
-                new SimpleGrantedAuthority(role.name());
+            new SimpleGrantedAuthority(role.name());
         return Collections.singletonList(authority);
     }
 
