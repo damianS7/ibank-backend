@@ -1,5 +1,8 @@
 package com.ibank.auth;
 
+import com.ibank.auth.exception.AuthenticationFailedException;
+import com.ibank.auth.http.AuthenticationRequest;
+import com.ibank.auth.http.AuthenticationResponse;
 import com.ibank.user.User;
 import com.ibank.utils.JwtUtil;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -16,43 +19,44 @@ import java.util.ArrayList;
  */
 @Service
 public class AuthenticationService {
+    private final AuthenticationManager authenticationManager;
+
     @Autowired
-    private AuthenticationManager authenticationManager;
+    public AuthenticationService(AuthenticationManager authenticationManager) {
+        this.authenticationManager = authenticationManager;
+    }
 
     /**
-     * Metodo que contiene la logica principal del servicio de autenticacion.
+     * Este metodo permite iniciar sesion en la aplicacion. Dado un usuario y password
+     * se coteja la informacion con la DB y se crea un token con la entidad User
+     *
      * @param request Peticion que contiene los datos de usuario que intenta autenticarse (usuario y password)
      * @return La respuesta que contiene los datos del usuario autentificado.
      * @throws AuthenticationException Excepcion con el mensaje del fallo arrojado durante la autenticacion
      */
-    public AuthenticationResponse auth (AuthenticationRequest request) throws AuthenticationException {
-        String username = request.getUsername();
-        String password = request.getPassword();
+    public AuthenticationResponse login(AuthenticationRequest request) throws AuthenticationException {
+        String username = request.username;
+        String password = request.password;
 
         Authentication auth;
 
         try {
             auth = authenticationManager.authenticate(
-                    new UsernamePasswordAuthenticationToken(
-                            username, password, new ArrayList<>())
+                new UsernamePasswordAuthenticationToken(username, password, new ArrayList<>())
             );
         } catch (AuthenticationException e) {
             throw new AuthenticationFailedException("Bad credentials"); // 403 Forbidden
         }
 
-        // Creamos el token utilizado para validar al usuario
-        String token = JwtUtil.generateToken(username);
-
         // Usuario autenticado
-        User user = (User) auth.getPrincipal();
+        User authUser = (User) auth.getPrincipal();
 
-        // Si necesitasemos mantener la sesion podriamos almacenar los datos
-        // Pero esto no tiene sentido en si usamos sesiones sin estado basado tokens
-        // SecurityContextHolder.getContext().setAuth entication(auth);
+        // Creamos el token utilizado para validar al usuario
+        String token = JwtUtil.createToken(authUser);
 
         // Enviamos al usuario de vuelta los datos necesarios para el cliente
         return new AuthenticationResponse(
-            user.getId(), user.getUsername(), user.getEmail(), token
+            authUser.getId(), authUser.getUsername(), authUser.getEmail(), token
         );
     }
 
