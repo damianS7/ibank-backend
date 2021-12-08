@@ -36,7 +36,7 @@ public class JwtUtil {
             .setIssuer(SecurityConstants.ISSUER_INFO)
             .setIssuedAt(new Date())
             .setClaims(claims)
-            .setExpiration(new Date(System.currentTimeMillis() + TimeUnit.HOURS.toMillis(1)))
+            .setExpiration(new Date(System.currentTimeMillis() + TimeUnit.MINUTES.toMillis(SecurityConstants.TOKEN_EXPIRATION_MINUTES)))
             //.setExpiration(new Date(System.currentTimeMillis() + TimeUnit.SECONDS.toMillis(1)))
             .signWith(SignatureAlgorithm.HS512, SecurityConstants.SECRET_KEY.getBytes(StandardCharsets.UTF_8))
             .compact();
