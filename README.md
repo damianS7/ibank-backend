@@ -1,45 +1,23 @@
-# iBank
+# iBank (backend)
 
-## Credenciales por defecto
+iBank-backend es la rest-api para el frontend de la aplicacion iBank
 
-La base de datos incluye un usuario creado por defecto y otros datos para poder usarla tan pronto como se configure.
+## Caracteristicas del proyecto
 
-* usuario: demo / password: demo
+* Autenticacion y Autorizacion con **Spring Web Security**
+* Base de datos **H2** (usuario por defecto demo/demo)
 
-## Caracteristicas
-
-* Frontend 100% responsive (web/mobile)
-* Autenticacion y Autorizacion (Spring Web Security)
-* Base de datos postgresql (Spring JPA)
-
-## Servicios
-
-* La API puede ser accedida desde localhost:8888
-* El servidor de base de datos en localhost:5432 (Postgress)
-* La interfaz web se accede desde localhost:8080
-
-## Dockerizar Servidor PostgreSQL
-
-```
-cd ./sql
-docker build -t pgserver .
-docker run --name pgserver -e POSTGRES_PASSWORD=123456 -d pgserver
-```
-
-## Modificar el backend para usar el servidor sql
-
-Modifica el fichero application.properties y cambia la linea por la de tu servidor postgreSQL en docker (puedes usar ip
-addr)
-
-```
-spring.datasource.url=jdbc:postgresql://<SERVIDOR_POSTGRESQL_DOCKER>:5432/fitnesskcalc
-```
-
-## Iniciar servidor REST (backend)
+## Ejecutar el servidor de la app
 
 ```
 git clone https://github.com/damianS7/ibank-backend.git
 cd ibank-backend
 ./mvnw package
-java -jar target/*.jar
+java -jar target/iBank-backend.jar
+```
+
+## Ejecutar como docker
+
+```
+En construccion ...
 ```
