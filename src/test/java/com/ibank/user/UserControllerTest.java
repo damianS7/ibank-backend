@@ -38,7 +38,7 @@ class UserControllerTest {
     @Autowired
     private UserController underTest;
 
-    private final String signupUrl = "http://192.168.0.21:8888/signup";
+    private final String signupUrl = "http://192.168.0.21:8888/api/v1/signup";
     private final String updateUrl = "http://192.168.0.21:8888/api/v1/user/";
 
     @Test
@@ -60,7 +60,7 @@ class UserControllerTest {
         UserSignupResponse signupResponse = ObjectJson.fromJson(jsonResponse, UserSignupResponse.class);
 
         // then
-        assertThat(rt.andExpect(status().is(200)));
+        rt.andExpect(status().is(200));
         assertThat(signupResponse.id).isGreaterThanOrEqualTo(0);
         assertThat(signupResponse.username).isEqualTo(signupRequest.username);
     }
@@ -80,7 +80,7 @@ class UserControllerTest {
             .contentType(MediaType.APPLICATION_JSON)).andDo(print());
 
         // then
-        assertThat(rt.andExpect(status().is4xxClientError()));
+        rt.andExpect(status().is4xxClientError());
     }
 
     @Test
@@ -95,8 +95,8 @@ class UserControllerTest {
         );
 
         // then
-        assertThat(rt.andExpect(
-            result -> assertTrue(result.getResolvedException() instanceof HttpMediaTypeNotSupportedException))
+        rt.andExpect(
+            result -> assertTrue(result.getResolvedException() instanceof HttpMediaTypeNotSupportedException)
         );
     }
 
@@ -208,7 +208,7 @@ class UserControllerTest {
             .contentType(MediaType.APPLICATION_JSON)).andDo(print());
 
         // then
-        assertThat(updateResult.andExpect(status().is4xxClientError()));
+        updateResult.andExpect(status().is4xxClientError());
     }
 
     @Test
@@ -245,7 +245,7 @@ class UserControllerTest {
 
 
         // then
-        assertThat(updateResult.andExpect(status().is4xxClientError()));
+        updateResult.andExpect(status().is4xxClientError());
 
         //log.info(" ...");
     }

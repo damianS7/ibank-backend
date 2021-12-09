@@ -39,7 +39,7 @@ public class WebSecurityConfig extends WebSecurityConfigurerAdapter {
             .and().cors()
             .and().csrf().disable()
             .authorizeRequests()
-            .antMatchers("/login", "/signup").permitAll()
+            .antMatchers("/api/v1/login/**", "/api/v1/signup/**").permitAll()
             .anyRequest().authenticated()
             .and().addFilter(new AuthorizationFilter(authenticationManager()));
     }
@@ -80,7 +80,6 @@ public class WebSecurityConfig extends WebSecurityConfigurerAdapter {
         configuration.addAllowedOriginPattern("*");
         //        configuration.setAllowedOrigins(List.of("http://localhost:8080", "http://localhost"));
         configuration.setAllowedMethods(List.of("GET", "POST", "PUT", "DELETE"));
-        //configuration.setAllowedMethods(Arrays.asList("GET", "OPTIONS", "POST"));
         UrlBasedCorsConfigurationSource source = new UrlBasedCorsConfigurationSource();
         source.registerCorsConfiguration("/**", configuration);
 

@@ -33,7 +33,7 @@ public class UserController {
      * @param signupRequest Los datos del usuario que se va a registrar.
      * @return Creado el usuario devuelve null
      */
-    @PostMapping(path = "/signup", consumes = "application/json")
+    @PostMapping(path = "/api/v1/signup", consumes = "application/json")
     public UserSignupResponse createUser(@Valid @RequestBody UserSignupRequest signupRequest) {
         return new UserSignupResponse(userService.createUser(signupRequest));
     }

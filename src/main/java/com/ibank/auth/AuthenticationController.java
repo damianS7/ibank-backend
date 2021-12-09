@@ -1,9 +1,9 @@
 package com.ibank.auth;
 
-import com.ibank.auth.exception.InvalidTokenException;
-import com.ibank.auth.exception.TokenExpiredException;
 import com.ibank.auth.http.AuthenticationRequest;
 import com.ibank.auth.http.AuthenticationResponse;
+import com.ibank.auth.http.TokenValidationRequest;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.core.AuthenticationException;
 import org.springframework.web.bind.annotation.*;
@@ -11,7 +11,7 @@ import org.springframework.web.bind.annotation.*;
 import javax.validation.Valid;
 
 @RestController
-@RequestMapping
+@Slf4j
 public class AuthenticationController {
 
     private final AuthenticationService authenticationService;
@@ -29,8 +29,8 @@ public class AuthenticationController {
      * @return Devuelve AuthenticationResponse con los datos de usuario (id, username, email y token)
      * @throws AuthenticationException Excepcion en caso de fallo
      */
-    @PostMapping("/login")
-    public AuthenticationResponse login(@Valid @RequestBody AuthenticationRequest request) throws AuthenticationException {
+    @PostMapping(path = "/api/v1/login", consumes = "application/json")
+    public AuthenticationResponse login(@Valid @RequestBody AuthenticationRequest request) {
         return authenticationService.login(request);
     }
 
@@ -40,6 +40,9 @@ public class AuthenticationController {
      * @throws AuthenticationException Excepcion si falla
      */
     @GetMapping("/api/v1/user/token/validate")
-    public void validateToken() throws InvalidTokenException, TokenExpiredException {
+    public String validateToken(@Valid @RequestBody TokenValidationRequest request) {
+        return "token is valid";
+        // MalFormedJWT ... ???
+        //return authenticationService.validToken();
     }
 }
