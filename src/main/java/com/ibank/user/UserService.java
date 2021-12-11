@@ -32,11 +32,6 @@ public class UserService implements UserDetailsService {
         // Leemos el nombre de usuario desde el token
         User loggedUser = (User) SecurityContextHolder.getContext().getAuthentication().getPrincipal();
 
-        // Si los nombres de la peticion y del usuario logeado no coinciden ...
-        if (!loggedUser.getUsername().equals(request.username)) {
-            throw new IllegalStateException("Attemp to modify a different user.");
-        }
-
         // Guardamos los cambios
         return this.updateUser(loggedUser.getUsername(), request.username, request.email, request.oldPassword, request.newPassword);
     }
