@@ -29,22 +29,16 @@ public class UserService implements UserDetailsService {
      * @return El usuario actualizado
      */
     public User updateLoggedUser(UserUpdateRequest request) {
-        // Leemos el nombre de usuario desde el sistema (token?), no desde la peticion
-        // Cambiar a id ???
-        // User loggedUser = (User) SecurityContextHolder.getContext().getAuthentication().getPrincipal();
-        // Long currentUserId = loggedUser.getId()
-        String currentUsername = "";
-        //try {
-        //    currentUsername = (String) SecurityContextHolder.getContext().getAuthentication().getPrincipal();
-        //} catch (Exception e) {
-        //}
+        // Leemos el nombre de usuario desde el token
+        User loggedUser = (User) SecurityContextHolder.getContext().getAuthentication().getPrincipal();
 
-        if (!currentUsername.equals(request.username)) {
+        // Si los nombres de la peticion y del usuario logeado no coinciden ...
+        if (!loggedUser.getUsername().equals(request.username)) {
             throw new IllegalStateException("Attemp to modify a different user.");
         }
 
         // Guardamos los cambios
-        return this.updateUser(currentUsername, request.username, request.email, request.oldPassword, request.newPassword);
+        return this.updateUser(loggedUser.getUsername(), request.username, request.email, request.oldPassword, request.newPassword);
     }
 
     User updateUser(String currentUsername, String newUsername, String newEmail, String oldPassword, String newPassword) {
