@@ -3,8 +3,11 @@ package com.ibank.auth;
 import com.ibank.auth.exception.AuthenticationFailedException;
 import com.ibank.auth.http.AuthenticationRequest;
 import com.ibank.auth.http.AuthenticationResponse;
+import com.ibank.auth.http.TokenValidationRequest;
+import com.ibank.auth.http.TokenValidationResponse;
 import com.ibank.user.User;
 import com.ibank.user.UserRepository;
+import com.ibank.utils.JwtUtil;
 import com.ibank.utils.PasswordEncoder;
 import lombok.extern.slf4j.Slf4j;
 import org.junit.jupiter.api.BeforeEach;
@@ -12,7 +15,6 @@ import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.security.authentication.AuthenticationManager;
-import org.springframework.transaction.annotation.Transactional;
 
 import static org.junit.jupiter.api.Assertions.*;
 
@@ -38,8 +40,7 @@ class AuthenticationServiceTest {
     }
 
     @Test
-    @Transactional
-    void shouldFailWhenIncorrectPassword() {
+    void shouldNotLoginWithInvalidCredentials() {
         // given
         AuthenticationRequest authRequest = new AuthenticationRequest("demo", "demo77");
 
@@ -51,8 +52,7 @@ class AuthenticationServiceTest {
     }
 
     @Test
-    @Transactional
-    void shouldLoginSuccessfully() {
+    void shouldLoginWithValidCredentials() {
         // given
         AuthenticationRequest authRequest = new AuthenticationRequest("demo", "demo");
 
@@ -61,6 +61,27 @@ class AuthenticationServiceTest {
         assertDoesNotThrow(() -> {
             AuthenticationResponse authResponse = underTest.login(authRequest);
             log.info(authResponse.toString());
+        });
+    }
+
+    @Test
+    void shouldUpdateToken() {
+        // given
+        User givenUser = new User(
+            1L, "demo", "demo@gmail.com", "1234"
+        );
+        String token = JwtUtil.createToken(givenUser);
+        log.info(token);
+
+        TokenValidationRequest tokenValidationRequest = new TokenValidationRequest(
+            givenUser.getUsername(), token
+        );
+
+        // when
+        // then
+        assertDoesNotThrow(() -> {
+            TokenValidationResponse tokenValidationResponse = underTest.validateToken(tokenValidationRequest);
+            log.info(tokenValidationResponse.token);
         });
     }
 

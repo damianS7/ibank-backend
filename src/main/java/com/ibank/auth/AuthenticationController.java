@@ -3,6 +3,7 @@ package com.ibank.auth;
 import com.ibank.auth.http.AuthenticationRequest;
 import com.ibank.auth.http.AuthenticationResponse;
 import com.ibank.auth.http.TokenValidationRequest;
+import com.ibank.auth.http.TokenValidationResponse;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.core.AuthenticationException;
@@ -40,9 +41,7 @@ public class AuthenticationController {
      * @throws AuthenticationException Excepcion si falla
      */
     @GetMapping("/api/v1/user/token/validate")
-    public String validateToken(@Valid @RequestBody TokenValidationRequest request) {
-        return "token is valid";
-        // MalFormedJWT ... ???
-        //return authenticationService.validToken();
+    public TokenValidationResponse validateToken(@Valid @RequestBody TokenValidationRequest request) {
+        return authenticationService.validateToken(request);
     }
 }
