@@ -1,10 +1,13 @@
 package com.ibank.user;
 
+import com.ibank.auth.http.AuthenticationRequest;
 import com.ibank.auth.http.AuthenticationResponse;
 import com.ibank.user.http.UserSignupRequest;
 import com.ibank.user.http.UserSignupResponse;
 import com.ibank.user.http.UserUpdateRequest;
+import com.ibank.user.http.UserUpdateResponse;
 import com.ibank.utils.ObjectJson;
+import com.ibank.utils.PasswordEncoder;
 import org.junit.jupiter.api.*;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
@@ -36,10 +39,27 @@ class UserControllerTest {
     private MockMvc mockMvc;
 
     @Autowired
+    private UserRepository userRepository;
+
+    @Autowired
     private UserController underTest;
 
     private final String signupUrl = "http://192.168.0.21:8888/api/v1/signup";
     private final String updateUrl = "http://192.168.0.21:8888/api/v1/user/";
+    private final String loginUrl = "http://192.168.0.21:8888/api/v1/login";
+
+    @BeforeEach
+    void setUp() {
+        // Usuario por defecto
+        userRepository.save(
+            new User(
+                null,
+                "demox",
+                "demox@gmail.com",
+                PasswordEncoder.encode("1234")
+            )
+        );
+    }
 
     @Test
     public void signupShouldWork() throws Exception {
@@ -51,21 +71,25 @@ class UserControllerTest {
         );
 
         // when
-        ResultActions rt = mockMvc.perform(post(signupUrl)
+        ResultActions signupRequestResult = mockMvc.perform(post(signupUrl)
             .content(ObjectJson.toJson(signupRequest))
             .contentType(MediaType.APPLICATION_JSON)
         );
 
-        String jsonResponse = rt.andReturn().getResponse().getContentAsString();
-        UserSignupResponse signupResponse = ObjectJson.fromJson(jsonResponse, UserSignupResponse.class);
-
         // then
-        rt.andExpect(status().is(200));
-        assertThat(signupResponse.id).isGreaterThanOrEqualTo(0);
-        assertThat(signupResponse.username).isEqualTo(signupRequest.username);
+        signupRequestResult.andExpect(status().is(200));
+
+        assertDoesNotThrow(() -> {
+            UserSignupResponse signupResponse = ObjectJson.fromJson(
+                signupRequestResult.andReturn().getResponse().getContentAsString(), UserSignupResponse.class
+            );
+            assertThat(signupResponse.id).isGreaterThanOrEqualTo(0);
+            assertThat(signupResponse.username).isEqualTo(signupRequest.username);
+        });
     }
 
     @Test
+    // Mostrar algun error con InvalidForm ...
     public void signupShouldFailWhenFormNotValid() throws Exception {
         // given
         UserSignupRequest signupRequest = new UserSignupRequest(
@@ -75,12 +99,12 @@ class UserControllerTest {
         );
 
         // when
-        ResultActions rt = mockMvc.perform(post(signupUrl)
+        ResultActions signupRequestResult = mockMvc.perform(post(signupUrl)
             .content(ObjectJson.toJson(signupRequest))
             .contentType(MediaType.APPLICATION_JSON)).andDo(print());
 
         // then
-        rt.andExpect(status().is4xxClientError());
+        signupRequestResult.andExpect(status().is4xxClientError());
     }
 
     @Test
@@ -89,39 +113,20 @@ class UserControllerTest {
         String plainText = "Hello";
 
         // when
-        ResultActions rt = mockMvc.perform(post(signupUrl)
+        ResultActions signupRequestResult = mockMvc.perform(post(signupUrl)
             .content(plainText)
             .contentType(MediaType.TEXT_PLAIN)
         );
 
         // then
-        rt.andExpect(
+        signupRequestResult.andExpect(
             result -> assertTrue(result.getResolvedException() instanceof HttpMediaTypeNotSupportedException)
         );
     }
 
-    @Test
-    public void signupShouldWorkWhenJsonIsPost() throws Exception {
-        // given
-        String json = """
-            { 
-                "id": null, 
-                "username": "demo", 
-                "email": "demo@gmail.com", 
-                "password" : "1234"  
-            }
-            """;
-
-        // when
-        // then
-        mockMvc.perform(post(signupUrl)
-                .content(json)
-                .contentType(MediaType.APPLICATION_JSON))
-            .andExpect(status().is2xxSuccessful());
-    }
 
     @Test
-    public void signupShouldFailWhenNotUsingPost() throws Exception {
+    public void signupShouldFailWhenNotUsingPostMethod() throws Exception {
         // given
         // when
         // then
@@ -139,114 +144,84 @@ class UserControllerTest {
     }
 
     @Test
-    @Disabled
-    public void updateShouldWork() throws Exception {
+    public void userUpdateShouldWork() throws Exception {
         // given
-        User user = new User(
-            null,
-            "demo",
-            "demo@gmail.com",
-            "1234"
+        AuthenticationRequest authenticationRequest = new AuthenticationRequest(
+            "demox", "1234"
+        );
+
+        ResultActions authenticationRequestResult = mockMvc.perform(post(loginUrl)
+            .content(ObjectJson.toJson(authenticationRequest))
+            .contentType(MediaType.APPLICATION_JSON)
+        ).andDo(print());
+
+        // La respuesta en json
+        String jsonResponse = authenticationRequestResult.andReturn().getResponse().getContentAsString();
+
+        // Conversion del json a AuthenticationResponse
+        AuthenticationResponse authenticationResponse = ObjectJson.fromJson(jsonResponse, AuthenticationResponse.class);
+
+        // Request para modificar el usuario
+        UserUpdateRequest updateRequest = new UserUpdateRequest(
+            "demox",
+            "demoMod@gmail.com",
+            "1234",
+            "123456",
+            authenticationResponse.token
         );
 
         // when
-        ResultActions signup = mockMvc.perform(post(signupUrl)
-            .content(ObjectJson.toJson(new UserSignupRequest(user)))
-            .contentType(MediaType.APPLICATION_JSON)
-        );
-
-        String jsonResponse = signup.andReturn().getResponse().getContentAsString();
-        AuthenticationResponse authResponse = ObjectJson.fromJson(jsonResponse, AuthenticationResponse.class);
-
-        UserUpdateRequest updateRequest = new UserUpdateRequest(
-            "demo",
-            "demo@gmail.com",
-            "1234",
-            "123456",
-            authResponse.token
-        );
-
-        ResultActions update = mockMvc.perform(put(updateUrl)
+        ResultActions updateRequestResult = mockMvc.perform(put(updateUrl)
             .content(ObjectJson.toJson(updateRequest))
-            .contentType(MediaType.APPLICATION_JSON)).andDo(print()
-        );
+            .contentType(MediaType.APPLICATION_JSON)
+            .header("Authorization", "Bearer " + authenticationResponse.token)
+        ).andDo(print());
 
         // then
-        update.andExpect(status().is2xxSuccessful());
+        updateRequestResult.andExpect(status().is2xxSuccessful());
+
+        assertDoesNotThrow(() -> {
+            String updateRequestJsonResponse = updateRequestResult.andReturn().getResponse().getContentAsString();
+            UserUpdateResponse userUpdateResponse = ObjectJson.fromJson(updateRequestJsonResponse, UserUpdateResponse.class);
+            assertEquals(userUpdateResponse.email, "demoMod@gmail.com");
+        });
     }
 
     @Test
-    @Disabled
-    public void updateShouldFailWhenFormNotValid() throws Exception {
+    public void userUpdateShouldFailWhenFormNotValid() throws Exception {
         // given
-        User user = new User(
-            null,
-            "demo",
-            "demo@gmail.com",
-            "1234"
+        AuthenticationRequest authenticationRequest = new AuthenticationRequest(
+            "demox", "1234"
         );
 
-        // when
-        ResultActions signup = mockMvc.perform(post(signupUrl)
-            .content(ObjectJson.toJson(new UserSignupRequest(user)))
+        ResultActions authenticationRequestResult = mockMvc.perform(post(loginUrl)
+            .content(ObjectJson.toJson(authenticationRequest))
             .contentType(MediaType.APPLICATION_JSON)
         );
 
-        String jsonResponse = signup.andReturn().getResponse().getContentAsString();
-        AuthenticationResponse authResponse = ObjectJson.fromJson(jsonResponse, AuthenticationResponse.class);
+        // La respuesta en json
+        String jsonResponse = authenticationRequestResult.andReturn().getResponse().getContentAsString();
 
+        // Conversion del json a AuthenticationResponse
+        AuthenticationResponse authenticationResponse = ObjectJson.fromJson(jsonResponse, AuthenticationResponse.class);
+
+        // Request para modificar el usuario
         UserUpdateRequest updateRequest = new UserUpdateRequest(
-            "demo",
-            "demo@gmail.com",
+            "demox",
+            "demoMod@gmail.com",
+            "1234",
             "",
-            "123456",
-            authResponse.token
-        );
-
-        ResultActions updateResult = mockMvc.perform(put(updateUrl)
-            .content(ObjectJson.toJson(updateRequest))
-            .contentType(MediaType.APPLICATION_JSON)).andDo(print());
-
-        // then
-        updateResult.andExpect(status().is4xxClientError());
-    }
-
-    @Test
-    @Disabled
-    void updateShouldFailWhenFormUserIsDifferentThanLogged() throws Exception {
-        // given
-        User user = new User(
-            null,
-            "demo",
-            "demo@gmail.com",
-            "1234"
-        );
-
-        UserUpdateRequest updateRequest = new UserUpdateRequest(
-            "demo",
-            "demo7777@gmail.com",
-            "1234",
-            "123456",
-            "1234"
+            authenticationResponse.token
         );
 
         // when
-        underTest.createUser(new UserSignupRequest(user));
-        ResultActions updateResult = mockMvc.perform(put(updateUrl)
+        ResultActions updateRequestResult = mockMvc.perform(put(updateUrl)
             .content(ObjectJson.toJson(updateRequest))
-            .contentType(MediaType.APPLICATION_JSON)).andDo(print());
+            .contentType(MediaType.APPLICATION_JSON)
+            .header("Authorization", "Bearer " + authenticationResponse.token)
+        ).andDo(print());
 
         // then
-        // Debe arrojar IllegalState ya que el password actual es 123456 y recibe dummypassword
-        //assertThrows(IllegalStateException.class, () -> {
-        //    User updatedUser = underTest.updateUser(updateRequest);
-        //    assertEquals(updatedUser.getEmail(), updateRequest.email);
-        //});
-
-
-        // then
-        updateResult.andExpect(status().is4xxClientError());
-
-        //log.info(" ...");
+        updateRequestResult.andExpect(status().is4xxClientError());
     }
 }
