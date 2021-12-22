@@ -5,7 +5,7 @@ import com.ibank.user.User;
 import lombok.*;
 
 import javax.persistence.*;
-import java.math.BigDecimal;
+import java.util.Date;
 import java.util.List;
 
 @Table(name = "banking_accounts")
@@ -15,40 +15,57 @@ import java.util.List;
 @AllArgsConstructor
 @ToString
 public class BankingAccount {
+    // Id de la cuenta
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
+    // Propietario de la cuenta
     @OneToOne(targetEntity = User.class,
         cascade = CascadeType.MERGE,
         fetch = FetchType.EAGER)
     @JoinColumn(name = "customer_id")
     private User customer;
 
+    // Numero de cuenta
     private String iban;
 
-    // Este campo es calculado ! No existe en la BD?
-    @Column(precision = 2, scale = 2)
-    private BigDecimal balance;
+    // Flag para cuentas bloquedas o no
+    private boolean locked = false;
 
-    private boolean enabled;
-
+    // Tipo de cuenta bancaria
     @Enumerated(EnumType.STRING)
     private BankingAccountType type;
 
+    // Moneda de la cuenta
+    @Enumerated(EnumType.STRING)
+    private BankingAccountCurrency currency;
+
+    // getBalance
+
+    // Fecha de creacion de la cuenta
+    private Date createdAt;
+
     @OneToMany(
         cascade = CascadeType.ALL,
-        mappedBy = "bankingAccount",
+        mappedBy = "ownerAccount",
         orphanRemoval = true
     )
     private List<BankingAccountTransaction> accountTransactions;
 
-    public BankingAccount(Long id, User customer, String iban, double balance, BankingAccountType type) {
-        this.id = id;
-        this.customer = customer;
-        this.iban = iban;
-        this.balance = new BigDecimal(balance);
-        this.type = type;
-        this.enabled = true;
+    //private List<BankingAccountTransaction> cardTransactions;
+
+
+    // Constructor para cuentas por defecto
+    public BankingAccount(User customer, String IBAN, BankingAccountType type, BankingAccountCurrency currency, Date createAt) {
+        this(null,
+            customer,
+            IBAN,
+            false,
+            type,
+            currency,
+            createAt,
+            null
+        );
     }
 }
