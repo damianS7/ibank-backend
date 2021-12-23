@@ -2,6 +2,7 @@ package com.ibank.user.http;
 
 import com.ibank.user.User;
 import lombok.AllArgsConstructor;
+import lombok.NoArgsConstructor;
 
 import javax.validation.constraints.NotBlank;
 
