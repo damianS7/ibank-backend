@@ -12,6 +12,7 @@ import java.util.Collections;
 
 import javax.persistence.*;
 
+@Data
 @Entity
 @Table(name = "users")
 @NoArgsConstructor
@@ -20,29 +21,19 @@ import javax.persistence.*;
 public class User implements UserDetails {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
-    @Getter
-    @Setter
     private Long id;
 
-    @Column
-    @Getter
-    @Setter
+    @Column(unique = true)
     private String username;
 
-    @Column
-    @Getter
-    @Setter
+    @Column(unique = true)
     private String email;
 
     @Column
-    @Getter
-    @Setter
     private String password;
 
     @Column
     @Enumerated(EnumType.STRING)
-    @Getter
-    @Setter
     private UserRole role;
 
 
