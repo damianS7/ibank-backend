@@ -1,5 +1,6 @@
 package com.ibank.account;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.ibank.transaction.BankingAccountTransaction;
 import com.ibank.user.User;
 import lombok.*;
@@ -25,9 +26,11 @@ public class BankingAccount {
         cascade = CascadeType.MERGE,
         fetch = FetchType.EAGER)
     @JoinColumn(name = "customer_id")
+    @JsonIgnore
     private User customer;
 
     // Numero de cuenta
+    @Column(unique = true)
     private String iban;
 
     // Flag para cuentas bloquedas o no
