@@ -25,19 +25,16 @@ class BankingAccountServiceTest {
     @Autowired
     private UserRepository userRepository;
 
-    private Faker faker;
-
     private BankingAccountService underTest;
 
     @BeforeEach
     void setUp() {
-        faker = new Faker();
         underTest = new BankingAccountService(bankingAccountRepository);
     }
 
     @Test
     @Transactional
-    void shouldCreateNewBankAccount() {
+    void shouldCreateBankAccount() {
         // given
         User customer = userRepository.save(new User(null, "demo", "demo@gmail.com", "1234"));
 
@@ -55,12 +52,37 @@ class BankingAccountServiceTest {
 
     @Test
     @Transactional
-    void shouldNotLockBankAccountWhenUnauthoraized() {
+    void shouldLockBankAccount() {
         // given
-        User admin = userRepository.save(new User(null, "demo", "demo@gmail.com", "1234"));
+        User customer = userRepository.save(new User(null, "demo", "demo@gmail.com", "1234"));
+        User admin = userRepository.save(new User(null, "admin", "admin@gmail.com", "1234"));
+
+        // Cambiamos el rol de la cuenta por defecto a ADMIN
+        admin.setRole(UserRole.ADMIN);
+
+        BankingAccount bankingAccount = underTest.createAccount(
+            customer,
+            BankingAccountType.SAVINGS,
+            BankingAccountCurrency.EUR
+        );
+
+        // when
+        underTest.setLockAccount(admin, bankingAccount.getId(), true);
+
+        // then
+        assertThat(bankingAccount.isLocked()).isTrue();
+        log.info(bankingAccount.toString());
+    }
+
+    @Test
+    @Transactional
+    void shouldFailToLockBankAccount() {
+        // given
+        User customer = userRepository.save(new User(null, "demo", "demo@gmail.com", "1234"));
+        User admin = userRepository.save(new User(null, "admin", "admin@gmail.com", "1234"));
+        // Rol de usuario para admin
         admin.setRole(UserRole.USER);
 
-        User customer = userRepository.save(new User(null, "demo", "demo@gmail.com", "1234"));
         BankingAccount bankingAccount = underTest.createAccount(
             customer,
             BankingAccountType.SAVINGS,
@@ -73,28 +95,6 @@ class BankingAccountServiceTest {
             underTest.setLockAccount(admin, bankingAccount.getId(), true);
         });
 
-        log.info(bankingAccount.toString());
-    }
-
-    @Test
-    @Transactional
-    void shouldLockBankAccount() {
-        // given
-        User admin = userRepository.save(new User(null, "demo", "demo@gmail.com", "1234"));
-        admin.setRole(UserRole.ADMIN);
-
-        User customer = userRepository.save(new User(null, "demo", "demo@gmail.com", "1234"));
-        BankingAccount bankingAccount = underTest.createAccount(
-            customer,
-            BankingAccountType.SAVINGS,
-            BankingAccountCurrency.EUR
-        );
-
-        // when
-        underTest.setLockAccount(admin, bankingAccount.getId(), true);
-
-        // then
-        assertThat(bankingAccount.isLocked()).isTrue();
         log.info(bankingAccount.toString());
     }
 }
