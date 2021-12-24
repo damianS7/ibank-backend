@@ -26,7 +26,6 @@ public class BankingAccount {
         cascade = CascadeType.MERGE,
         fetch = FetchType.EAGER)
     @JoinColumn(name = "customer_id")
-    @JsonIgnore
     private User customer;
 
     // Numero de cuenta
